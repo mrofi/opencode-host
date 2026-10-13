@@ -15,7 +15,7 @@ The web UI is opencode's own: it serves HTTP on `PORT`, with basic auth when the
 
 ## Projects
 
-opencode works per directory. `clone-repo.sh <name> --repo <url>` clones into `~/work/<name>`; open that directory as a project in the web UI. Names are lowercase `a-z0-9-` (max 31); URLs must be https on github.com or Azure DevOps, without credentials. opencode itself manages multiple sessions, so this image has no session-spawning scripts.
+opencode works per directory. `clone-repo.sh <name> --repo <url>` clones into `~/work/<name>`; open that directory as a project in the web UI (Add project, then type the full path such as `/home/node/work/<name>`; see the README). Names are lowercase `a-z0-9-` (max 31); URLs must be https on github.com or Azure DevOps, without credentials. opencode itself manages multiple sessions, so this image has no session-spawning scripts.
 
 ## Persistence
 

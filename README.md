@@ -28,6 +28,17 @@ docker run -d --name opencode-host -p 8080:8080 \
 
 Open `http://localhost:8080` (user `opencode`, your password). Add a provider in the UI (or set the provider's API key variable, for example `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`, which opencode reads). Without a bucket nothing is persisted, but it works.
 
+### Opening a project and starting a session in the web UI
+
+Checked in a browser against this image (opencode 1.19.0):
+
+1. The home page lists your **Projects** in the left sidebar. Click **Add project** (the folder icon next to "Projects" does the same).
+2. In the "Open project" box, type the **full path** and wait a moment: `/home/node/work/` lists the folders under `~/work`. Typing just a folder name finds nothing. Pick the folder (for example one made with `clone-repo.sh <name> --repo <url>`, which lands in `/home/node/work/<name>`).
+3. The project appears in the sidebar. Click it (or **New session**) to get a new-session page with a prompt box. Pick a model or connect a provider (Settings, or the "Connect to 75+ providers" link), type a prompt, and the session is created.
+4. Later sessions of a project are listed on its page, and every session survives restarts if the backup is on.
+
+Not covered by that check: sending a prompt (it needs a provider login or key, which I did not use).
+
 To look at or use the terminal UI instead: `docker exec -it opencode-host opencode attach http://localhost:8080 -p <password>` (or `tmux attach -t server` to see the server's output).
 
 ## Persistence (optional, recommended)
