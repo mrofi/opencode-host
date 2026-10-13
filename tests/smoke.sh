@@ -171,4 +171,18 @@ docker run -d --name smoke-d -p 18093:8080 -e OPENCODE_SERVER_PASSWORD=$PW "$IMA
 for _ in $(seq 30); do curl -s -m 3 -o /dev/null http://127.0.0.1:18093/ && break; sleep 1; done
 [[ "$(code http://127.0.0.1:18093/)" == 200 ]] && pass "no PORT uses 8080" || bad "default port broken"
 docker rm -f smoke-d >/dev/null
+# --- 11. git uses the token for every command (not only clone-repo.sh), for the right hosts only
+docker run -d --name smoke-a --network host -v "$work/opencode":/home/node/bin/opencode:ro -e PORT=17890 -e OPENCODE_SERVER_PASSWORD=$PW -e GITHUB_TOKEN=ghp_SMOKETOKEN -e AZDO_PAT=azdo-smoketoken "$IMAGE" >/dev/null
+sleep 4
+cred() { docker exec smoke-a sh -c "printf 'protocol=https\nhost=$1\n\n' | git credential fill 2>&1"; }
+[[ "$(docker exec smoke-a git config --system --get credential.helper)" == /home/node/bin/git-credential-env.sh ]] && pass "git credential helper is set system-wide" || bad "credential helper not configured"
+out="$(cred github.com)"; [[ "$out" == *username=x-access-token* && "$out" == *password=ghp_SMOKETOKEN* ]] && pass "git gets GITHUB_TOKEN for github.com" || bad "no token for github.com"
+out="$(cred dev.azure.com)"; [[ "$out" == *password=azdo-smoketoken* ]] && pass "git gets AZDO_PAT for dev.azure.com" || bad "no token for Azure DevOps"
+out="$(cred gitlab.com || true)"; [[ "$out" != *smoketoken* && "$out" != *SMOKETOKEN* ]] && pass "no token is offered to other hosts" || bad "token offered to gitlab.com"
+docker exec smoke-a sh -c 'cd /tmp && rm -rf r && git init -q r && cd r && git remote add origin https://github.com/acme/x.git && ! grep -rqE "SMOKETOKEN|smoketoken" .git' && pass "token is not written to .git/config" || bad "token leaked into .git"
+docker rm -f smoke-a >/dev/null
+docker run -d --name smoke-a --network host -v "$work/opencode":/home/node/bin/opencode:ro -e PORT=17891 -e OPENCODE_SERVER_PASSWORD=$PW "$IMAGE" >/dev/null
+sleep 4
+out="$(cred github.com || true)"; [[ "$out" != *password=* ]] && pass "without a token git offers nothing and fails fast (no prompt)" || bad "credentials offered without a token"
+docker rm -f smoke-a >/dev/null
 (( fail == 0 )) && echo "SMOKE PASSED" || { echo "SMOKE FAILED"; exit 1; }

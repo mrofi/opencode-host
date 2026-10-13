@@ -14,6 +14,12 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/* \
  && npm install -g "opencode-ai@${OPENCODE_VERSION}" && npm cache clean --force
 
+# git asks this helper for credentials for every command (clone, pull, push), not only for clone-repo.sh. It answers
+# only for github.com (GITHUB_TOKEN) and Azure DevOps (AZDO_PAT), only when that variable is set, and says nothing
+# otherwise. GIT_TERMINAL_PROMPT=0 makes a missing token fail fast instead of waiting for a password nobody can type.
+RUN git config --system credential.helper /home/node/bin/git-credential-env.sh
+ENV GIT_TERMINAL_PROMPT=0
+
 # node:22 ships a non-root `node` user with uid 1000; everything runs as `node`.
 USER node
 ENV HOME=/home/node \

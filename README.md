@@ -15,6 +15,7 @@ Single user, one machine. It is not a multi-tenant service.
 
 - **opencode runs shell commands for you, and the web UI is the way in.** The server **refuses to start** unless `OPENCODE_SERVER_PASSWORD` is set (override with `ALLOW_NO_PASSWORD=1` only when the network already restricts access). Basic auth over plain HTTP sends the password in the clear: put it behind HTTPS (your platform's, or a reverse proxy).
 - **Permissions.** opencode's defaults allow most tools and ask for `external_directory` and `doom_loop`. You answer prompts in the web UI. `AUTO_APPROVE=1` allows everything with no prompts: then anything the container can reach, a prompt-injected repo or web page could use. Give the container only credentials you are willing to lose.
+- **Git tokens.** `GITHUB_TOKEN` / `AZDO_PAT` are used by every git command in the container, pushes included. Prefer a read-only fine-grained token; a write token lets a prompt-injected repo or page push to those repos.
 - **Your provider keys are in the bucket** (encrypted) once you log in or add keys. Treat the bucket and `CRYPT_PASSWORD` accordingly.
 - opencode is MIT-licensed, so this image includes it (installed from npm as `opencode-ai`, `OPENCODE_VERSION` build arg).
 
