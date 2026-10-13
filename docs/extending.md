@@ -40,7 +40,7 @@ Run on `SIGTERM` in name order, each limited to `SHUTDOWN_HOOK_TIMEOUT` seconds 
 
 ## Telling the sessions about your tools: `config/AGENTS.d/*.md`
 
-At every boot `~/work/AGENTS.md` is rebuilt from the base file plus your fragments (name order). opencode reads it as project rules for sessions in `~/work`. Say what the tool is, how to call it, and what to avoid:
+At every boot the global rules file `~/.config/opencode/AGENTS.md` is rebuilt from the base file plus your fragments (name order). opencode reads it in every session, whatever the project. The file is owned by the image (edits to it are overwritten at boot): put your own rules in a fragment, or in a repo's `AGENTS.md`. Say what the tool is, how to call it, and what to avoid:
 
 ```markdown
 ## Database access

@@ -12,14 +12,14 @@ setup() {
 @test "installs AGENTS.md into ~/work and the base opencode.json" {
   run seed-config.sh
   [ "$status" -eq 0 ]
-  grep -q "clone-repo.sh" "$HOME/work/AGENTS.md"
+  grep -q "clone-repo.sh" "$HOME/.config/opencode/AGENTS.md"
   [ "$(jq -r '."$schema"' "$OJ")" = "https://opencode.ai/config.json" ]
 }
 
 @test "AGENTS.md is always refreshed from the image" {
-  mkdir -p "$HOME/work"; echo stale > "$HOME/work/AGENTS.md"
+  mkdir -p "$HOME/.config/opencode"; echo stale > "$HOME/.config/opencode/AGENTS.md"
   seed-config.sh
-  [[ "$(cat "$HOME/work/AGENTS.md")" != stale ]]
+  [[ "$(cat "$HOME/.config/opencode/AGENTS.md")" != stale ]]
 }
 
 @test "an existing opencode.json keeps its keys" {
@@ -42,7 +42,7 @@ setup() {
   echo "## Tool B" > "$cfg/AGENTS.d/20-b.md"; echo "## Tool A" > "$cfg/AGENTS.d/10-a.md"
   echo '{"share":"disabled"}' > "$cfg/settings.d/10.json"
   seed-config.sh
-  [ "$(grep -n 'Tool A' "$HOME/work/AGENTS.md" | cut -d: -f1)" -lt "$(grep -n 'Tool B' "$HOME/work/AGENTS.md" | cut -d: -f1)" ]
+  [ "$(grep -n 'Tool A' "$HOME/.config/opencode/AGENTS.md" | cut -d: -f1)" -lt "$(grep -n 'Tool B' "$HOME/.config/opencode/AGENTS.md" | cut -d: -f1)" ]
   [ "$(jq -r .share "$OJ")" = disabled ]
 }
 
@@ -58,4 +58,18 @@ setup() {
   run grep -E "hf_[A-Za-z0-9]{10,}|AKIA|password=" "$CONFIG_DIR/AGENTS.md"
   [ "$status" -ne 0 ]
   grep -q "clone-repo.sh" "$CONFIG_DIR/AGENTS.md"
+}
+
+@test "a legacy ~/work/AGENTS.md written by the image is removed, a user's own is kept" {
+  mkdir -p "$HOME/work"
+  head -1 "$CONFIG_DIR/AGENTS.md" > "$HOME/work/AGENTS.md"
+  seed-config.sh
+  [ ! -e "$HOME/work/AGENTS.md" ]
+  echo "# my own rules" > "$HOME/work/AGENTS.md"
+  seed-config.sh
+  [ "$(cat "$HOME/work/AGENTS.md")" = "# my own rules" ]
+}
+
+@test "AGENTS.md tells the agent to install skills where they are backed up" {
+  grep -q '~/.config/opencode/skills/<name>/SKILL.md' "$CONFIG_DIR/AGENTS.md"
 }

@@ -61,15 +61,18 @@ check_crypt_access() {
   fi
 }
 
-# What is backed up: opencode's data (auth.json, sessions), config and state directories, each under its own
-# name in the backup. Logs, downloaded binaries and git snapshots are large and useless elsewhere.
+# What is backed up: opencode's data (auth.json, sessions), config and state directories, plus the skill folders
+# opencode also reads (~/.claude/skills, ~/.agents/skills), each under its own name in the backup. Logs, downloaded binaries and git snapshots are large and useless elsewhere.
 # shellcheck disable=SC2034  # used by backup.sh / restore.sh after sourcing
-OC_NAMES=(data config state)
+OC_NAMES=(data config state claude-skills agents-skills)
 oc_dir() { # name -> local directory
   case "$1" in
     data)   echo "${XDG_DATA_HOME:-$HOME/.local/share}/opencode" ;;
     config) echo "${XDG_CONFIG_HOME:-$HOME/.config}/opencode" ;;
     state)  echo "${XDG_STATE_HOME:-$HOME/.local/state}/opencode" ;;
+    # opencode also reads skills from these Claude/agent-compatible folders; keep them if an agent installs there.
+    claude-skills) echo "$HOME/.claude/skills" ;;
+    agents-skills) echo "$HOME/.agents/skills" ;;
   esac
 }
 # shellcheck disable=SC2034

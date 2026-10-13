@@ -13,6 +13,12 @@ opencode web UI. Act carefully and prefer small, reversible steps.
   Do not put credentials in the URL: the token comes from the environment automatically
   (`GITHUB_TOKEN` for GitHub, `AZDO_PAT` for Azure DevOps).
 
+## Installing skills
+
+When the owner asks you to install a skill, put it in `~/.config/opencode/skills/<name>/SKILL.md` (with any files it
+needs next to it). That folder is backed up, so the skill is still there after a restart. Do not install skills into
+a repo, `~/.claude/skills` or `~/.agents/skills` unless the owner asks for that. Tell the owner the path you used.
+
 ## Things to know
 
 - This container can restart at any time. `~/work` is **not** saved. Commit and push work you want to keep.

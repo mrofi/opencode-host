@@ -5,7 +5,7 @@
 `entrypoint.sh`, in order:
 
 1. Restores opencode's data, config and state from the bucket (hard limit 90 s; an unreachable bucket is logged and boot continues).
-2. Claims the backup prefix (`lease.sh`), then writes `~/work/AGENTS.md` and merges the base keys into `~/.config/opencode/opencode.json`.
+2. Claims the backup prefix (`lease.sh`), then writes the global rules file `~/.config/opencode/AGENTS.md` and merges the base keys into `~/.config/opencode/opencode.json`.
 3. Starts the backup loop (only if `S3_BUCKET` is set and encryption is configured).
 4. Runs your boot hooks (`entrypoint.d`).
 5. Starts a tmux session named `server` running `opencode web --hostname 0.0.0.0 --port $PORT` in `~/work`, **unless** `OPENCODE_SERVER_PASSWORD` is unset (then it logs an error and stays up) or `opencode` is missing.
@@ -26,6 +26,10 @@ opencode keeps its state in three XDG directories. Each is backed up under its o
 | `~/.local/share/opencode` | `data/` | `auth.json` (provider logins), sessions and their storage |
 | `~/.config/opencode` | `config/` | `opencode.json`, agents, commands, plugins |
 | `~/.local/state/opencode` | `state/` | prompt history, recent models |
+| `~/.claude/skills` | `claude-skills/` | skills in the Claude-compatible folder, if an agent installs there |
+| `~/.agents/skills` | `agents-skills/` | skills in the agent-compatible folder |
+
+Skills: opencode reads them from `~/.config/opencode/skills/<name>/SKILL.md` and the two folders above, plus `.opencode/`, `.claude/` and `.agents/` folders inside a repo. The first three are backed up; skills inside a repo come back only if committed. The image's `AGENTS.md` asks the agent to install skills into `~/.config/opencode/skills/`.
 
 Excluded (top level of each): `log/`, `bin/`, `snapshot/`, `node_modules/`, and `*.lock`. Not backed up: `~/work` (clone and push), anything else, and your platform's secrets.
 

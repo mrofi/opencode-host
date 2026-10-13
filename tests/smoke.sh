@@ -53,13 +53,13 @@ sleep 6
 [[ "$(docker exec smoke-a tmux ls 2>&1)" == server:* ]] && pass "tmux session 'server' exists" || bad "no tmux session 'server'"
 args="$(docker exec smoke-a cat /tmp/opencode-args 2>/dev/null || true)"
 [[ "$args" == "web --hostname 0.0.0.0 --port 17861" ]] && pass "opencode started as: $args" || bad "unexpected opencode args: $args"
-docker exec smoke-a grep -q "clone-repo.sh" /home/node/work/AGENTS.md && pass "AGENTS.md installed" || bad "AGENTS.md missing"
+docker exec smoke-a grep -q "clone-repo.sh" /home/node/.config/opencode/AGENTS.md && pass "AGENTS.md installed" || bad "AGENTS.md missing"
 [[ "$(docker exec smoke-a jq -r '."$schema"' /home/node/.config/opencode/opencode.json)" == https://opencode.ai/config.json ]] && pass "opencode.json seeded" || bad "opencode.json not seeded"
 grep -q '^\[server\] .*stub opencode listening' <<<"$(docker logs smoke-a 2>&1)" && pass "pane screen is shown in the container logs" || bad "pane output missing from logs"
 grep -q "$PW" <<<"$(docker logs smoke-a 2>&1)" && bad "web password leaked into logs" || pass "no web password in logs"
 
 # --- 2. SIGTERM -> final backup, fast exit
-docker exec smoke-a sh -c 'mkdir -p ~/.local/share/opencode/storage ~/.config/opencode && echo "{\"fake\":\"cred\"}" > ~/.local/share/opencode/auth.json && echo sess > ~/.local/share/opencode/storage/s.json'
+docker exec smoke-a sh -c 'mkdir -p ~/.local/share/opencode/storage ~/.config/opencode && echo "{\"fake\":\"cred\"}" > ~/.local/share/opencode/auth.json && echo sess > ~/.local/share/opencode/storage/s.json && mkdir -p ~/.config/opencode/skills/k ~/.agents/skills/k && echo cfg > ~/.config/opencode/skills/k/SKILL.md && echo agents > ~/.agents/skills/k/SKILL.md'
 start=$SECONDS
 docker stop -t 15 smoke-a >/dev/null
 took=$((SECONDS - start))
@@ -75,6 +75,8 @@ sleep 6
 [[ "$(docker exec smoke-b cat /home/node/.local/share/opencode/auth.json 2>/dev/null)" == '{"fake":"cred"}' ]] && pass "auth.json restored on 2nd boot" || bad "auth.json not restored"
 [[ "$(docker exec smoke-b stat -c %a /home/node/.local/share/opencode/auth.json)" == 600 ]] && pass "auth.json mode 600" || bad "auth.json mode not 600"
 [[ "$(docker exec smoke-b cat /home/node/.local/share/opencode/storage/s.json 2>/dev/null)" == sess ]] && pass "sessions restored" || bad "sessions not restored"
+[[ "$(docker exec smoke-b cat /home/node/.config/opencode/skills/k/SKILL.md 2>/dev/null)" == cfg && "$(docker exec smoke-b cat /home/node/.agents/skills/k/SKILL.md 2>/dev/null)" == agents ]] && pass "skills restored (config and agents folders)" || bad "skills not restored"
+docker exec smoke-b grep -q 'skills/<name>/SKILL.md' /home/node/.config/opencode/AGENTS.md && pass "global AGENTS.md tells the agent where to install skills" || bad "skills guidance missing"
 docker rm -f smoke-b >/dev/null
 
 # --- 4. unreachable bucket still boots, without leaking secrets
@@ -136,7 +138,7 @@ if docker build -q --build-arg "BASE=$IMAGE" -t opencode-host-smoke-ext "$root/e
   sleep 6
   grep -q 'hello from the example hook (GREETING=hi)' <<<"$(docker logs smoke-e 2>&1)" && pass "the derived image's boot hook ran" || bad "example hook did not run"
   docker exec smoke-e python3 --version >/dev/null 2>&1 && pass "the tool added by the derived image is installed" || bad "python3 missing in derived image"
-  docker exec smoke-e grep -q "Example tool" /home/node/work/AGENTS.md && pass "AGENTS.d fragment appended" || bad "AGENTS.d fragment missing"
+  docker exec smoke-e grep -q "Example tool" /home/node/.config/opencode/AGENTS.md && pass "AGENTS.d fragment appended" || bad "AGENTS.d fragment missing"
   [[ "$(docker exec smoke-e jq -r .share /home/node/.config/opencode/opencode.json)" == disabled ]] && pass "settings.d fragment merged" || bad "settings.d fragment not merged"
   docker stop -t 15 smoke-e >/dev/null
   grep -q 'bye from the example hook' <<<"$(docker logs smoke-e 2>&1)" && pass "the derived image's shutdown hook ran" || bad "shutdown hook did not run"

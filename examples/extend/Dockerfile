@@ -13,6 +13,6 @@ USER node
 # Boot hooks run before the web server starts; shutdown hooks run before the final backup.
 COPY --chown=node:node entrypoint.d/ /home/node/entrypoint.d/
 COPY --chown=node:node shutdown.d/   /home/node/shutdown.d/
-# Tell the agent about your tools (appended to ~/work/AGENTS.md) and add opencode.json settings.
+# Tell the agent about your tools (appended to the global ~/.config/opencode/AGENTS.md) and add opencode.json settings.
 COPY --chown=node:node AGENTS.d/     /home/node/config/AGENTS.d/
 COPY --chown=node:node settings.d/   /home/node/config/settings.d/

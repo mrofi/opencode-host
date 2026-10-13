@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Install image-managed config: ~/work/AGENTS.md (always refreshed; opencode reads it as project rules) and
+# Install image-managed config: the global rules file ~/.config/opencode/AGENTS.md (always refreshed; opencode reads it
+# in every session, whatever the project) and
 # the base keys of ~/.config/opencode/opencode.json (merged, keeping everything else).
 # Derived images extend both without touching this script:
-#   config/AGENTS.d/*.md     appended to ~/work/AGENTS.md, in name order
+#   config/AGENTS.d/*.md     appended to the global AGENTS.md, in name order
 #   config/settings.d/*.json merged into opencode.json, in name order (later files win)
 # AUTO_APPROVE=1 additionally sets every permission to "allow" (opencode's default already allows most tools;
 # this also covers external_directory and doom_loop, which default to "ask").
@@ -12,10 +13,12 @@ config="${CONFIG_DIR:-$here/../config}"
 ocdir="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
 
 mkdir -p "$HOME/work" "$ocdir"
-cp "$config/AGENTS.md" "$HOME/work/AGENTS.md"
+# Earlier versions wrote the rules to ~/work/AGENTS.md; drop that copy (only if it is ours) so they are not read twice.
+if [[ -f "$HOME/work/AGENTS.md" ]] && head -1 "$HOME/work/AGENTS.md" | grep -qx '# opencode host'; then rm -f "$HOME/work/AGENTS.md"; fi
+cp "$config/AGENTS.md" "$ocdir/AGENTS.md"
 for f in "${AGENTS_D:-$config/AGENTS.d}"/*.md; do
   [[ -f "$f" ]] || continue
-  { echo; cat "$f"; } >> "$HOME/work/AGENTS.md"
+  { echo; cat "$f"; } >> "$ocdir/AGENTS.md"
 done
 
 settings="$ocdir/opencode.json"

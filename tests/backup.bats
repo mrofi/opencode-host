@@ -101,3 +101,18 @@ setup() {
   [ -f "$D/auth.json" ]
   [ ! -e "$S" ]
 }
+
+@test "skills installed in any of the three folders opencode reads are backed up and restored" {
+  for d in "$C/skills/a" "$HOME/.claude/skills/b" "$HOME/.agents/skills/c"; do mkdir -p "$d"; echo "skill $(basename "$d")" > "$d/SKILL.md"; done
+  run backup.sh
+  [ "$status" -eq 0 ]
+  [ -f "$BACKUP_REMOTE/config/skills/a/SKILL.md" ]
+  [ -f "$BACKUP_REMOTE/claude-skills/b/SKILL.md" ]
+  [ -f "$BACKUP_REMOTE/agents-skills/c/SKILL.md" ]
+  export HOME="$BATS_TEST_TMPDIR/fresh"; mkdir -p "$HOME"
+  run restore.sh
+  [ "$status" -eq 0 ]
+  [ "$(cat "$HOME/.config/opencode/skills/a/SKILL.md")" = "skill a" ]
+  [ "$(cat "$HOME/.claude/skills/b/SKILL.md")" = "skill b" ]
+  [ "$(cat "$HOME/.agents/skills/c/SKILL.md")" = "skill c" ]
+}
