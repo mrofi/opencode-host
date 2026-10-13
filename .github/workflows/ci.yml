@@ -1,0 +1,28 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends bats shellcheck rclone tmux jq git socat util-linux
+      - name: shellcheck
+        run: shellcheck -x -P SCRIPTDIR scripts/*.sh tests/*.sh
+      - name: bats
+        run: bats tests/*.bats
+
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the image
+        run: docker build -t opencode-host .
+      - name: Smoke test (MinIO, stub opencode, derived image)
+        run: bash tests/smoke.sh opencode-host
+      - name: Layer scan
+        run: bash tests/layer-scan.sh opencode-host
