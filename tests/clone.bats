@@ -2,6 +2,7 @@
 # clone-repo.sh: URL validation and credential handling (git is stubbed).
 
 setup() {
+  unset XDG_DATA_HOME XDG_CONFIG_HOME XDG_STATE_HOME
   export HOME="$BATS_TEST_TMPDIR/home"
   mkdir -p "$HOME/work" "$BATS_TEST_TMPDIR/bin"
   cat > "$BATS_TEST_TMPDIR/bin/git" <<'STUB'

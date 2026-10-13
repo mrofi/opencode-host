@@ -5,7 +5,13 @@ set -uo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 workdir="$HOME/work"
+# PORT: where the web UI listens. Validated here so a typo cannot take the container down.
 port="${PORT:-8080}"
+if ! [[ "$port" =~ ^[0-9]+$ ]] || (( port < 1 || port > 65535 )); then
+  echo "[entrypoint] WARNING invalid PORT '$port' (want 1-65535), using 8080"
+  port=8080
+fi
+export PORT="$port"
 mkdir -p "$workdir"
 
 # Identifies this boot to lease.sh (two live instances on one backup prefix would overwrite each other).

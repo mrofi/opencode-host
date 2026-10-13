@@ -26,7 +26,7 @@ docker run -d --name opencode-host -p 8080:8080 \
   ghcr.io/mrofi/opencode-host:latest
 ```
 
-Open `http://localhost:8080` (user `opencode`, your password). Add a provider in the UI (or set the provider's API key variable, for example `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`, which opencode reads). Without a bucket nothing is persisted, but it works.
+Open `http://localhost:8080` (user `opencode`, your password). To use another port set `PORT` and publish the same one: `-e PORT=9000 -p 9000:9000`. Add a provider in the UI (or set the provider's API key variable, for example `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`, which opencode reads). Without a bucket nothing is persisted, but it works.
 
 ### Opening a project and starting a session in the web UI
 

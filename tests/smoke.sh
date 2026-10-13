@@ -152,4 +152,21 @@ for _ in $(seq 30); do curl -s -m 3 -o /dev/null "http://127.0.0.1:17880/" && br
 [[ "$(curl -s -m 5 -o /dev/null -w '%{http_code}' -u "opencode:wrong" http://127.0.0.1:17880/)" == 401 ]] && pass "real opencode web refuses a wrong password" || bad "web server accepted a wrong password"
 [[ "$(curl -s -m 5 -o /dev/null -w '%{http_code}' -u "opencode:$PW" http://127.0.0.1:17880/)" == 200 ]] && pass "real opencode web serves the UI with the password" || bad "web server did not serve the UI"
 docker rm -f smoke-d >/dev/null
+# --- 10. PORT: a custom value moves the real web UI; an invalid one falls back to 8080 with a warning
+code() { curl -s -m 5 -o /dev/null -w '%{http_code}' -u "opencode:$PW" "$1"; }
+docker run -d --name smoke-d -p 18091:18091 -e PORT=18091 -e OPENCODE_SERVER_PASSWORD=$PW "$IMAGE" >/dev/null
+for _ in $(seq 30); do curl -s -m 3 -o /dev/null http://127.0.0.1:18091/ && break; sleep 1; done
+[[ "$(code http://127.0.0.1:18091/)" == 200 ]] && pass "PORT=18091 moves the web UI to 18091" || bad "custom PORT not honored"
+docker rm -f smoke-d >/dev/null
+for bad_port in abc 0 99999; do
+  docker run -d --name smoke-d -p 18092:8080 -e "PORT=$bad_port" -e OPENCODE_SERVER_PASSWORD=$PW "$IMAGE" >/dev/null
+  for _ in $(seq 30); do curl -s -m 3 -o /dev/null http://127.0.0.1:18092/ && break; sleep 1; done
+  grep -q "WARNING invalid PORT '$bad_port'" <<<"$(docker logs smoke-d 2>&1)" && [[ "$(code http://127.0.0.1:18092/)" == 200 ]] \
+    && pass "invalid PORT=$bad_port warns and falls back to 8080" || bad "invalid PORT=$bad_port not handled"
+  docker rm -f smoke-d >/dev/null
+done
+docker run -d --name smoke-d -p 18093:8080 -e OPENCODE_SERVER_PASSWORD=$PW "$IMAGE" >/dev/null
+for _ in $(seq 30); do curl -s -m 3 -o /dev/null http://127.0.0.1:18093/ && break; sleep 1; done
+[[ "$(code http://127.0.0.1:18093/)" == 200 ]] && pass "no PORT uses 8080" || bad "default port broken"
+docker rm -f smoke-d >/dev/null
 (( fail == 0 )) && echo "SMOKE PASSED" || { echo "SMOKE FAILED"; exit 1; }

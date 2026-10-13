@@ -2,6 +2,7 @@
 # backup.sh / restore.sh against a local directory standing in for the bucket.
 
 setup() {
+  unset XDG_DATA_HOME XDG_CONFIG_HOME XDG_STATE_HOME
   export HOME="$BATS_TEST_TMPDIR/home"
   export BACKUP_REMOTE="$BATS_TEST_TMPDIR/remote"
   mkdir -p "$HOME" "$BACKUP_REMOTE"

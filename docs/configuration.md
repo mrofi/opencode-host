@@ -9,7 +9,7 @@ Everything is an environment variable. Unset optional ones are skipped quietly. 
 | `OPENCODE_SERVER_PASSWORD` | yes | none | **Required.** Basic-auth password of the web UI/API. Without it the server is not started (the container stays up and logs why). |
 | `OPENCODE_SERVER_USERNAME` | | `opencode` | Basic-auth user name. |
 | `ALLOW_NO_PASSWORD` | | unset | `1` starts the server with no password. Only for networks that already restrict access: opencode can run shell commands. |
-| `PORT` | | `8080` | Port `opencode web` listens on (all interfaces). |
+| `PORT` | | `8080` | Port `opencode web` listens on (all interfaces). An invalid value (not a number from 1 to 65535) logs a warning and uses 8080. With plain Docker, publish the same port: `-e PORT=9000 -p 9000:9000`. |
 | `AUTO_APPROVE` | | unset | `1` sets every opencode permission to `allow` (no prompts). See the README warning. |
 
 ## Persistence (S3-compatible bucket)

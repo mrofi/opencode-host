@@ -2,6 +2,7 @@
 # Two instances on one backup prefix: the newest wins, the older one stops writing.
 
 setup() {
+  unset XDG_DATA_HOME XDG_CONFIG_HOME XDG_STATE_HOME
   export HOME="$BATS_TEST_TMPDIR/home"
   export BACKUP_REMOTE="$BATS_TEST_TMPDIR/remote"
   mkdir -p "$HOME/.local/share/opencode" "$BACKUP_REMOTE"

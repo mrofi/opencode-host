@@ -2,6 +2,7 @@
 # seed-config.sh: AGENTS.md and opencode.json.
 
 setup() {
+  unset XDG_DATA_HOME XDG_CONFIG_HOME XDG_STATE_HOME
   export HOME="$BATS_TEST_TMPDIR/home"; mkdir -p "$HOME"
   export CONFIG_DIR="$BATS_TEST_DIRNAME/../config"
   export PATH="$BATS_TEST_DIRNAME/../scripts:$PATH"
