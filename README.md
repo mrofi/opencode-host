@@ -100,4 +100,4 @@ The arm64 image, the Docker Compose example, running behind a TLS proxy, and the
 
 ## License
 
-MIT, see [LICENSE](LICENSE). opencode is licensed separately by its authors.
+[MIT with the Commons Clause](LICENSE). You can use, modify and self-host it freely, including inside your own company and for your own products. You may **not** sell it, which includes offering it (or a service substantially made of it) to third parties as a paid SaaS or PaaS. For that, see [LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md) to get a commercial license. Releases published before the Commons Clause was added stay under MIT. opencode itself is licensed separately by its authors.
