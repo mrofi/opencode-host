@@ -32,10 +32,13 @@ Everything is an environment variable. Unset optional ones are skipped quietly. 
 
 | Name | Default | Meaning |
 |---|---|---|
-| `GITHUB_TOKEN` (secret) | none | Lets `clone-repo.sh` clone private github.com repos. Use a read-only fine-grained token. |
+| `GITHUB_TOKEN` (secret) | none | Default token for github.com, used by every git command in the container (clone, pull, push). Use a read-only fine-grained token unless the agent must push. |
+| `GITHUB_TOKEN_<OWNER>` (secret) | none | Token for repos of one account or org, chosen by the repo owner and tried before `GITHUB_TOKEN`. `<OWNER>` is the name in upper case with other characters as `_`: `GITHUB_TOKEN_ROKETID` for `github.com/roketid/...`, `GITHUB_TOKEN_MY_ORG` for `my-org`. |
 | `AZDO_PAT` (secret) | none | Same for Azure DevOps (`dev.azure.com`, `*.visualstudio.com`). Code: Read is enough. |
 
 Git is configured system-wide with a credential helper (`git-credential-env.sh`), so **every** git command in the container (clone, pull, push) uses the token for those hosts. The token is never put in a URL, `.git/config` or a process argument. With a read-only token, pushes are refused by the host. With a write token, anything the agent runs can push to the repos it covers: use a fine-grained token limited to the repos you need, with an expiry. Without a token, git fails fast instead of prompting.
+
+**Several accounts or orgs.** A fine-grained GitHub token belongs to exactly one owner, so create one token per owner (each limited to the repos you need) and set one secret each, for example `GITHUB_TOKEN_MROFI`, `GITHUB_TOKEN_ROKETID` and `GITHUB_TOKEN_LIVECMS`. Git sends the repo's owner to the helper, which uses that owner's token. A repo whose owner has no `GITHUB_TOKEN_<OWNER>` falls back to `GITHUB_TOKEN`, so that token is also sent to other owners' repos on github.com (it simply fails there if it has no access). Leave `GITHUB_TOKEN` unset if you want only the per-owner tokens to apply.
 
 ## Runtime
 
