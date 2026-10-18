@@ -9,7 +9,9 @@ Everything is an environment variable. Unset optional ones are skipped quietly. 
 | `OPENCODE_SERVER_PASSWORD` | yes | none | **Required.** Basic-auth password of the web UI/API. Without it the server is not started (the container stays up and logs why). |
 | `OPENCODE_SERVER_USERNAME` | | `opencode` | Basic-auth user name. |
 | `ALLOW_NO_PASSWORD` | | unset | `1` starts the server with no password. Only for networks that already restrict access: opencode can run shell commands. |
-| `PORT` | | `8080` | Port `opencode web` listens on (all interfaces). An invalid value (not a number from 1 to 65535) logs a warning and uses 8080. With plain Docker, publish the same port: `-e PORT=9000 -p 9000:9000`. |
+| `PORT` | | `8080` | Port `opencode web` listens on (all interfaces); with `/code` enabled, the port of the gateway in front of it. An invalid value (not a number from 1 to 65535) logs a warning and uses 8080. With plain Docker, publish the same port: `-e PORT=9000 -p 9000:9000`. |
+| `CODE_PASSWORD` | | none | Turns on VS Code in the browser at `/code` (needs an image built with `INSTALL_CODE_SERVER=1`). Without it code-server never starts. Removed from the environment of everything the entrypoint starts afterwards. |
+| `CODE_PORT`, `WEB_PORT` | | `8081`, `4096` | Loopback ports of code-server and, behind the gateway, `opencode web`. Not exposed; they must differ from each other and from `PORT`, else `/code` is disabled with a warning. |
 | `AUTO_APPROVE` | | unset | `1` sets every opencode permission to `allow` (no prompts). See the README warning. |
 
 ## Persistence (S3-compatible bucket)
@@ -52,3 +54,9 @@ Git is configured system-wide with a credential helper (`git-credential-env.sh`)
 | `AGENTS_D`, `SETTINGS_D`, `CONFIG_DIR` | under `~/config` | Where `AGENTS.d`, `settings.d` and the base config are read from. |
 
 opencode's own variables (provider API keys, `OPENCODE_CONFIG`, ...) pass straight through; see opencode's docs.
+
+## VS Code in the browser
+
+Build with `--build-arg INSTALL_CODE_SERVER=1` (version: `CODE_SERVER_VERSION`), run with `-e CODE_PASSWORD=...`, then open `http://host:8080/code?folder=/home/node/work/<repo>`. A bare `/code` opens `~/work`. `PORT` is then served by `scripts/gateway.js`: `/code/*` goes to code-server, everything else to `opencode web` (which moves to loopback `WEB_PORT`, so its own basic-auth password still applies). Without `CODE_PASSWORD` nothing changes. code-server's settings and extensions are in `~/.local/share/code-server` and are part of the S3 backup (caches and logs excluded).
+
+This is a shell in the container, with the same reach as opencode: use a long password, serve it over HTTPS, and do not publish the port if you do not need `/code`. The code-server log is `~/.cache/opencode-host/code-server.log`.

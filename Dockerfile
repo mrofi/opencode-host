@@ -3,6 +3,9 @@
 FROM node:22-bookworm-slim
 
 ARG OPENCODE_VERSION=latest
+# INSTALL_CODE_SERVER=1 adds code-server (VS Code in the browser at /code, needs CODE_PASSWORD at run time). Default 0.
+ARG INSTALL_CODE_SERVER=0
+ARG CODE_SERVER_VERSION=4.96.4
 
 LABEL org.opencontainers.image.title="opencode-host" \
       org.opencontainers.image.description="opencode web in tmux with encrypted S3 backup of its state, and hooks for derived images" \
@@ -13,6 +16,16 @@ RUN apt-get update \
       tmux git curl ca-certificates openssh-client jq rclone procps ripgrep \
  && rm -rf /var/lib/apt/lists/* \
  && npm install -g "opencode-ai@${OPENCODE_VERSION}" && npm cache clean --force
+
+# code-server from the official release tarball (not the curl|sh installer), unpacked under /usr/local.
+RUN if [ "$INSTALL_CODE_SERVER" = "1" ]; then \
+      arch="$(dpkg --print-architecture)" \
+ && curl -fsSL -o /tmp/cs.tgz "https://github.com/coder/code-server/releases/download/v${CODE_SERVER_VERSION}/code-server-${CODE_SERVER_VERSION}-linux-${arch}.tar.gz" \
+ && mkdir -p /usr/local/lib/code-server \
+ && tar -xzf /tmp/cs.tgz -C /usr/local/lib/code-server --strip-components=1 \
+ && ln -s /usr/local/lib/code-server/bin/code-server /usr/local/bin/code-server \
+ && rm /tmp/cs.tgz; \
+    fi
 
 # git asks this helper for credentials for every command (clone, pull, push), not only for clone-repo.sh. It answers
 # only for github.com (GITHUB_TOKEN, or GITHUB_TOKEN_<OWNER> per account/org; useHttpPath lets it see the owner) and Azure DevOps (AZDO_PAT), only when that variable is set, and says nothing

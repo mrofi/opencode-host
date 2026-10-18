@@ -29,6 +29,10 @@ docker run -d --name opencode-host -p 8080:8080 \
 
 Open `http://localhost:8080` (user `opencode`, your password). To use another port set `PORT` and publish the same one: `-e PORT=9000 -p 9000:9000`. Add a provider in the UI (or set the provider's API key variable, for example `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`, which opencode reads). Without a bucket nothing is persisted, but it works.
 
+### VS Code in the browser (optional)
+
+Build with `--build-arg INSTALL_CODE_SERVER=1` and set `CODE_PASSWORD`: `http://localhost:8080/code?folder=/home/node/work/<repo>` opens that folder in code-server; everything else on the port is still opencode. Off unless the password is set. It is a shell in the container, so read [the notes](docs/configuration.md#vs-code-in-the-browser) first.
+
 ### Opening a project and starting a session in the web UI
 
 Checked in a browser against this image (opencode 1.19.0):

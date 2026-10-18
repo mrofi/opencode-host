@@ -22,6 +22,23 @@ mkdir -p "$HOME/.cache/opencode-host" && printf %s "$INSTANCE_ID" > "$HOME/.cach
 
 echo "[entrypoint] starting as uid $(id -u)"
 
+# Optional VS Code in the browser at /code. Needs the binary (INSTALL_CODE_SERVER=1) and CODE_PASSWORD: it gives a
+# shell in this container, so it never starts without a password. When enabled, gateway.js takes PORT and proxies
+# /code to code-server and everything else to `opencode web`, both on loopback; otherwise opencode web keeps PORT.
+web_port="$port"; code_pid=""; gateway_pid=""
+if [[ -n "${CODE_PASSWORD:-}" ]]; then
+  code_port="${CODE_PORT:-8081}"; web_internal="${WEB_PORT:-4096}"
+  if ! command -v code-server >/dev/null 2>&1; then
+    echo "[entrypoint] WARNING CODE_PASSWORD is set but code-server is not installed (build with INSTALL_CODE_SERVER=1), /code disabled"
+  elif ! [[ "$code_port" =~ ^[0-9]+$ && "$web_internal" =~ ^[0-9]+$ ]] \
+       || (( code_port < 1 || code_port > 65535 || web_internal < 1 || web_internal > 65535 )) \
+       || [[ "$code_port" == "$web_internal" || "$code_port" == "$port" || "$web_internal" == "$port" ]]; then
+    echo "[entrypoint] WARNING invalid or clashing CODE_PORT '$code_port' / WEB_PORT '$web_internal' / PORT '$port', /code disabled"
+  else
+    web_port="$web_internal"
+  fi
+fi
+
 # Hard cap as a second guard on top of rclone's own timeouts.
 timeout 90 "$here/restore.sh" || echo "[entrypoint] restore failed, continuing without restored state"
 "$here/lease.sh" take || echo "[entrypoint] could not claim the backup lease (see above), continuing"
@@ -52,6 +69,20 @@ run_hooks() { # dir, timeout seconds
 }
 run_hooks "${ENTRYPOINT_D:-$HOME/entrypoint.d}" "${HOOK_TIMEOUT:-60}"
 
+# code-server starts after restore (which writes the data directories) and takes the password out of the
+# environment for everything started afterwards.
+if [[ "$web_port" != "$port" ]]; then
+  # code-server lets the PORT env var override --bind-addr, so pin it to its own port.
+  PORT="$code_port" PASSWORD="$CODE_PASSWORD" code-server --bind-addr "127.0.0.1:$code_port" --auth password \
+    --user-data-dir "$HOME/.local/share/code-server" --disable-telemetry --disable-update-check \
+    "$workdir" >"$HOME/.cache/opencode-host/code-server.log" 2>&1 &
+  code_pid=$!
+  CODE_UPSTREAM="$code_port" WEB_UPSTREAM="$web_port" node "$here/gateway.js" &
+  gateway_pid=$!
+  echo "[entrypoint] code-server started, /code on port $port"
+fi
+unset CODE_PASSWORD
+
 session=server
 if [[ -z "${OPENCODE_SERVER_PASSWORD:-}" && "${ALLOW_NO_PASSWORD:-}" != 1 ]]; then
   # opencode can run shell commands, so an open server on 0.0.0.0 is remote code execution for anyone who finds it.
@@ -59,10 +90,12 @@ if [[ -z "${OPENCODE_SERVER_PASSWORD:-}" && "${ALLOW_NO_PASSWORD:-}" != 1 ]]; th
 elif ! command -v opencode >/dev/null 2>&1; then
   echo "[entrypoint] ERROR the 'opencode' command is not installed in this image. The container stays up so you can see this message."
 else
+  # Behind the gateway opencode listens on loopback only.
+  web_host=0.0.0.0; [[ "$web_port" != "$port" ]] && web_host=127.0.0.1
   # The trailing sleep keeps the pane (and its output) around if opencode exits.
   tmux new-session -d -s "$session" -c "$workdir" -x 200 -y 50 \
-    "opencode web --hostname 0.0.0.0 --port $port; echo \"[$session] opencode exited with status \$?\"; sleep infinity"
-  echo "[entrypoint] tmux session '$session' started: opencode web on port $port"
+    "opencode web --hostname $web_host --port $web_port; echo \"[$session] opencode exited with status \$?\"; sleep infinity"
+  echo "[entrypoint] tmux session '$session' started: opencode web on port $web_port"
 fi
 
 # Many hosts give no shell, so surface the pane's screen in the logs. Snapshots only, not a stream.
@@ -83,6 +116,7 @@ shutdown() {
   "$here/backup.sh" || echo "[entrypoint] final backup failed"
   "$here/lease.sh" release || true
   tmux kill-server 2>/dev/null || true
+  for p in "$code_pid" "$gateway_pid"; do [[ -n "$p" ]] && kill "$p" 2>/dev/null; done
   exit 0
 }
 trap shutdown TERM INT
