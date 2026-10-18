@@ -11,6 +11,7 @@ Everything is an environment variable. Unset optional ones are skipped quietly. 
 | `ALLOW_NO_PASSWORD` | | unset | `1` starts the server with no password. Only for networks that already restrict access: opencode can run shell commands. |
 | `PORT` | | `8080` | Port `opencode web` listens on (all interfaces); with `/code` enabled, the port of the gateway in front of it. An invalid value (not a number from 1 to 65535) logs a warning and uses 8080. With plain Docker, publish the same port: `-e PORT=9000 -p 9000:9000`. |
 | `CODE_PASSWORD` | | none | Turns on VS Code in the browser at `/code` (needs an image built with `INSTALL_CODE_SERVER=1`). Without it code-server never starts. Removed from the environment of everything the entrypoint starts afterwards. |
+| `CODE_URL` | | none | Public base URL of this host (for example `https://my-host.example.com`). Lets the agent print a ready link with `code-url.sh [path]` when you ask for the VS Code URL. Not secret. |
 | `CODE_PORT`, `WEB_PORT` | | `8081`, `4096` | Loopback ports of code-server and, behind the gateway, `opencode web`. Not exposed; they must differ from each other and from `PORT`, else `/code` is disabled with a warning. |
 | `AUTO_APPROVE` | | unset | `1` sets every opencode permission to `allow` (no prompts). See the README warning. |
 

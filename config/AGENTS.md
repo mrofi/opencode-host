@@ -20,6 +20,12 @@ When the owner asks you to install a skill, put it in `~/.config/opencode/skills
 needs next to it). That folder is backed up, so the skill is still there after a restart. Do not install skills into
 a repo, `~/.claude/skills` or `~/.agents/skills` unless the owner asks for that. Tell the owner the path you used.
 
+## Opening a folder in VS Code
+
+If the owner asks for the VS Code link (or to "open this in VS Code"), you cannot open a browser yourself: run
+`code-url.sh [path]` (default: the current directory) and give them the URL it prints. If it says `CODE_URL` is not
+set, tell the owner that VS Code in the browser is not configured for this host. Never try to log in to it.
+
 ## Things to know
 
 - This container can restart at any time. `~/work` is **not** saved. Commit and push work you want to keep.
