@@ -31,7 +31,7 @@ Open `http://localhost:8080` (user `opencode`, your password). To use another po
 
 ### VS Code in the browser (optional)
 
-Build with `--build-arg INSTALL_CODE_SERVER=1` and set `CODE_PASSWORD`: `http://localhost:8080/code?folder=/home/node/work/<repo>` opens that folder in code-server; everything else on the port is still opencode. Off unless the password is set. Set `CODE_URL` to the host's public URL and ask the agent for "the VS Code link": it runs `code-url.sh` and hands you the URL. It is a shell in the container, so read [the notes](docs/configuration.md#vs-code-in-the-browser) first.
+Use the `-code` image (`ghcr.io/mrofi/opencode-host:latest-code`, or build with `--build-arg INSTALL_CODE_SERVER=1`) and set `CODE_PASSWORD`: `http://localhost:8080/code?folder=/home/node/work/<repo>` opens that folder in code-server; everything else on the port is still opencode. Off unless the password is set. Set `CODE_URL` to the host's public URL and ask the agent for "the VS Code link": it runs `code-url.sh` and hands you the URL. It is a shell in the container, so read [the notes](docs/configuration.md#vs-code-in-the-browser) first.
 
 ### Opening a project and starting a session in the web UI
 
