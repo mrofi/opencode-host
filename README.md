@@ -68,6 +68,7 @@ Derived images add four kinds of things without editing any base script:
 | Shutdown logic | `/home/node/shutdown.d/*.sh` | Run on `SIGTERM`, before the final backup. |
 | Instructions for the agent | `/home/node/config/AGENTS.d/*.md` | Appended to the `AGENTS.md` opencode reads in `~/work` (tell it about your tools). |
 | opencode settings | `/home/node/config/settings.d/*.json` | Merged into `~/.config/opencode/opencode.json`. |
+| Your own backed-up directories | `BACKUP_EXTRA_DIRS` | Restored at boot and backed up with opencode's state. |
 
 Plus any packages or tools you install. A complete, tested example is in [`examples/extend`](examples/extend); the guide is [docs/extending.md](docs/extending.md).
 

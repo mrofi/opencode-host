@@ -116,3 +116,63 @@ setup() {
   [ "$(cat "$HOME/.claude/skills/b/SKILL.md")" = "skill b" ]
   [ "$(cat "$HOME/.agents/skills/c/SKILL.md")" = "skill c" ]
 }
+
+@test "extra directories round-trip under extra/<name>, with nothing excluded" {
+  X="$HOME/tooldata"
+  export BACKUP_EXTRA_DIRS="tool=$X"
+  run restore.sh --extra
+  [ "$status" -eq 0 ]
+  mkdir -p "$X/bin" "$X/log" "$X/releases/v1"
+  echo b > "$X/bin/app"; echo l > "$X/log/x.log"; echo '{}' > "$X/composer.lock"; echo m > "$X/releases/v1/meta.json"
+  run backup.sh
+  [ "$status" -eq 0 ]
+  [ -f "$BACKUP_REMOTE/extra/tool/bin/app" ]
+  [ -f "$BACKUP_REMOTE/extra/tool/log/x.log" ]
+  [ -f "$BACKUP_REMOTE/extra/tool/composer.lock" ]
+  [ -f "$BACKUP_REMOTE/extra/tool/releases/v1/meta.json" ]
+
+  export HOME="$BATS_TEST_TMPDIR/home2"; mkdir -p "$HOME"
+  export BACKUP_EXTRA_DIRS="tool=$HOME/tooldata"
+  run restore.sh --extra
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"tool restored"* ]]
+  [ "$(cat "$HOME/tooldata/releases/v1/meta.json")" = "m" ]
+  [ -f "$HOME/tooldata/composer.lock" ]
+}
+
+@test "an extra directory that was not restored at boot is not backed up" {
+  X="$HOME/tooldata"; mkdir -p "$X"; echo partial > "$X/f"
+  mkdir -p "$BACKUP_REMOTE/extra/tool"; echo good > "$BACKUP_REMOTE/extra/tool/f"
+  export BACKUP_EXTRA_DIRS="tool=$X"
+  run backup.sh
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"not restored at boot"* ]]
+  [ "$(cat "$BACKUP_REMOTE/extra/tool/f")" = "good" ]
+}
+
+@test "the restore of extra directories does not touch opencode's own" {
+  mkdir -p "$BACKUP_REMOTE/data" "$BACKUP_REMOTE/extra/tool"
+  echo '{"a":1}' > "$BACKUP_REMOTE/data/auth.json"; echo t > "$BACKUP_REMOTE/extra/tool/f"
+  export BACKUP_EXTRA_DIRS="tool=$HOME/tooldata"
+  run restore.sh --extra
+  [ "$status" -eq 0 ]
+  [ -f "$HOME/tooldata/f" ]
+  [ ! -e "$D/auth.json" ]
+  run restore.sh
+  [ -f "$D/auth.json" ]
+  [ ! -e "$D/extra" ]
+}
+
+@test "BACKUP_EXTRA_DIRS entries that are not valid are skipped with a warning" {
+  mkdir -p "$HOME/ok"; echo y > "$HOME/ok/f"
+  export BACKUP_EXTRA_DIRS="Bad=/x,rel=relative/path noequals ok=$HOME/ok ok=$HOME/other"
+  run restore.sh --extra
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"'Bad=/x' skipped"* ]]
+  [[ "$output" == *"'rel=relative/path' skipped"* ]]
+  [[ "$output" == *"'noequals' skipped"* ]]
+  [[ "$output" == *"'ok=$HOME/other' skipped"* ]]
+  run backup.sh
+  [ -f "$BACKUP_REMOTE/extra/ok/f" ]
+  [ ! -e "$BACKUP_REMOTE/extra/rel" ]
+}

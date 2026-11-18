@@ -23,5 +23,18 @@ for n in "${OC_NAMES[@]}"; do
     exit 1
   fi
 done
+for n in "${EXTRA_NAMES[@]}"; do
+  d="${EXTRA_DIRS[$n]}"
+  [[ -d "$d" ]] || continue
+  if [[ ! -e "$RESTORED_MARKS/$n" ]]; then
+    log backup "WARNING $n ($d) was not restored at boot, so it is not backed up (that would overwrite its backup)"
+    continue
+  fi
+  did=1
+  if ! rclone sync "$d" "$BACKUP_REMOTE/extra/$n" --quiet 2>&1; then
+    log backup "ERROR sync of $n failed"
+    exit 1
+  fi
+done
 (( did )) || { log backup "no opencode directories yet, nothing to back up"; exit 0; }
 log backup "done"
