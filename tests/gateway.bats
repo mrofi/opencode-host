@@ -15,6 +15,11 @@ setup() {
       s.listen(+process.argv[2],"127.0.0.1")' "$1" "$2" &
     echo $! >> "$BATS_TEST_TMPDIR/pids"
   done
+  # Both stubs must be listening before the gateway: the gateway answering only means the gateway is up, and
+  # a request that reaches a stub not yet listening gets a 502.
+  for p in "$CODE" "$WEB"; do
+    for _ in $(seq 50); do curl -s -o /dev/null "127.0.0.1:$p/" && break; sleep 0.1; done
+  done
   CODE_UPSTREAM=$CODE WEB_UPSTREAM=$WEB node "$BATS_TEST_DIRNAME/../scripts/gateway.js" >/dev/null &
   echo $! >> "$BATS_TEST_TMPDIR/pids"
   for _ in $(seq 30); do curl -s -o /dev/null "localhost:$PORT/" && break; sleep 0.1; done
