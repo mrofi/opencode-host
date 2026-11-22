@@ -11,6 +11,8 @@ It is a **base image**: you build your own Dockerfile on top of it and add the t
 
 Single user, one machine. It is not a multi-tenant service.
 
+**Image:** [`ghcr.io/mrofi/opencode-host`](https://github.com/users/mrofi/packages/container/package/opencode-host): `:latest` (and `:<version>`), or `:latest-code` with VS Code in the browser. Every tag is listed on that page.
+
 ## Read this first
 
 - **opencode runs shell commands for you, and the web UI is the way in.** The server **refuses to start** unless `OPENCODE_SERVER_PASSWORD` is set (override with `ALLOW_NO_PASSWORD=1` only when the network already restricts access). Basic auth over plain HTTP sends the password in the clear: put it behind HTTPS (your platform's, or a reverse proxy).
